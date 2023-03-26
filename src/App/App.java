@@ -13,6 +13,10 @@ public class App extends JFrame {
     private Object[][] array = test.getContent("C://");
     // Заголовки столбцов !-- в массив
     private Object[] columnsHeader = new String[] {"Имя", "Тип"};
+
+    private int[] selectTableSlot = new int[2];
+    private boolean status = false;
+    private int flag = 0;
     App(){
 
     // Главная панель
@@ -130,22 +134,34 @@ public class App extends JFrame {
         JTable table1 = new JTable(array,columnsHeader){
           @Override
           public boolean isCellEditable(int row, int column){
-              System.out.println("Сработало");
-              return getColumnName(column).equals("Имя");
+/*              System.out.println("Сработало");
+              return getColumnName(column).equals("Имя");*/
+              return test.editingPermission(status);
           }
         };
 
         centerPanel.add(new JScrollPane(table1));
 
         table1.addMouseListener(new MouseListener() {
-            int count = 0;
             public void mouseClicked(MouseEvent event) {
-                count++;
-
-                if (count == 4) {
+                if (status) {
+                    status = false;
+                }
+                if (event.getClickCount() == 2) {
                     pathField.setText(table1.getValueAt(table1.getSelectedRow(), table1.getSelectedColumn()).toString());
                     table1.editCellAt(table1.getSelectedRow(), table1.getSelectedColumn());
-                    count = 0;
+                } else {
+                    if (event.getClickCount() == 1) {
+                        if (selectTableSlot[0] == table1.getSelectedRow() & selectTableSlot[1] == table1.getSelectedColumn()) {
+                            if (table1.getColumnName(table1.getSelectedColumn()).equals("Имя")) {
+                                status = true;
+                                table1.editCellAt(table1.getSelectedRow(), table1.getSelectedColumn());
+                            }
+                        } else {
+                            selectTableSlot[0] = table1.getSelectedRow();
+                            selectTableSlot[1] = table1.getSelectedColumn();
+                        }
+                    }
                 }
             }
 

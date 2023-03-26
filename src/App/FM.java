@@ -60,4 +60,8 @@ public class FM {
         }*/
         return catalogContent;
     }
+
+    public boolean editingPermission(boolean status) {
+        return status;
+    }
 }
