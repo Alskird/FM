@@ -1,22 +1,17 @@
 package App;
 
 import javax.swing.*;
-import javax.swing.event.CellEditorListener;
-import javax.swing.table.TableCellEditor;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.EventObject;
 
 public class App extends JFrame {
-    // Данные для таблиц !-- в массив
     FM test = new FM();
-    private Object[][] array = test.getContent("C://");
-    // Заголовки столбцов !-- в массив
+    private Object[][] contentArray = test.getHomeContent();
     private Object[] columnsHeader = new String[] {"Имя", "Тип"};
-
     private int[] selectTableSlot = new int[2];
     private boolean status = false;
-    private int flag = 0;
+    private String valueActiveField;
     App(){
 
     // Главная панель
@@ -131,11 +126,9 @@ public class App extends JFrame {
         // Таблица файлов/каталогов
         /*JTable table1 = new JTable(array, columnsHeader);
         centerPanel.add(new JScrollPane(table1));*/
-        JTable table1 = new JTable(array,columnsHeader){
+        JTable table1 = new JTable(contentArray,columnsHeader){
           @Override
           public boolean isCellEditable(int row, int column){
-/*              System.out.println("Сработало");
-              return getColumnName(column).equals("Имя");*/
               return test.editingPermission(status);
           }
         };
@@ -148,8 +141,14 @@ public class App extends JFrame {
                     status = false;
                 }
                 if (event.getClickCount() == 2) {
-                    pathField.setText(table1.getValueAt(table1.getSelectedRow(), table1.getSelectedColumn()).toString());
-                    table1.editCellAt(table1.getSelectedRow(), table1.getSelectedColumn());
+                    valueActiveField = (table1.getValueAt(table1.getSelectedRow(), table1.getSelectedColumn())).toString();
+                    contentArray = test.getContent(valueActiveField);
+                    DefaultTableModel dtm = new DefaultTableModel(contentArray, columnsHeader);
+                    table1.setModel(dtm);
+                    DefaultTableModel dtm2 = (DefaultTableModel) table1.getModel();
+                    dtm2.setDataVector(contentArray,columnsHeader);
+                    dtm2.fireTableStructureChanged();
+                    pathField.setText(test.getActivePath());
                 } else {
                     if (event.getClickCount() == 1) {
                         if (selectTableSlot[0] == table1.getSelectedRow() & selectTableSlot[1] == table1.getSelectedColumn()) {
@@ -175,6 +174,7 @@ public class App extends JFrame {
 
         });
 
+        pathField.setText(test.getActivePath());
     // Настройки окна
         setContentPane(manePanel);
         setSize(800,600);

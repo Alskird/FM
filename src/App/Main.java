@@ -11,7 +11,5 @@ public class Main {
        /* User test = new User("test");
         System.out.println(test.getName());
         System.out.println(test.getSCL());*/
-        FM test = new FM();
-        String[][] catalogContent = test.getContent("C://HomeFM/");
     }
 }
