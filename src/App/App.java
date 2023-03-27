@@ -12,6 +12,8 @@ public class App extends JFrame {
     private int[] selectTableSlot = new int[2];
     private boolean status = false;
     private String valueActiveField;
+    private DefaultTableModel dtm = new DefaultTableModel(contentArray, columnsHeader);
+
     App(){
 
     // Главная панель
@@ -132,6 +134,7 @@ public class App extends JFrame {
               return test.editingPermission(status);
           }
         };
+        table1.setModel(dtm);
 
         centerPanel.add(new JScrollPane(table1));
 
@@ -143,11 +146,12 @@ public class App extends JFrame {
                 if (event.getClickCount() == 2) {
                     valueActiveField = (table1.getValueAt(table1.getSelectedRow(), table1.getSelectedColumn())).toString();
                     contentArray = test.getContent(valueActiveField);
-                    DefaultTableModel dtm = new DefaultTableModel(contentArray, columnsHeader);
-                    table1.setModel(dtm);
-                    DefaultTableModel dtm2 = (DefaultTableModel) table1.getModel();
+
+                    /*DefaultTableModel dtm2 = (DefaultTableModel) table1.getModel();
                     dtm2.setDataVector(contentArray,columnsHeader);
-                    dtm2.fireTableStructureChanged();
+                    dtm2.fireTableStructureChanged();*/
+                    dtm.setDataVector(contentArray,columnsHeader);
+                    dtm.fireTableStructureChanged();
                     pathField.setText(test.getActivePath());
                 } else {
                     if (event.getClickCount() == 1) {
