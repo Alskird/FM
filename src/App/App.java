@@ -1,6 +1,7 @@
 package App;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicOptionPaneUI;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
@@ -145,8 +146,7 @@ public class App extends JFrame {
                 }
                 if (event.getClickCount() == 2) {
                     valueActiveField = (table1.getValueAt(table1.getSelectedRow(), table1.getSelectedColumn())).toString();
-                    contentArray = test.getContent(valueActiveField);
-
+                    contentArray = test.getContent(valueActiveField, 0);
                     /*DefaultTableModel dtm2 = (DefaultTableModel) table1.getModel();
                     dtm2.setDataVector(contentArray,columnsHeader);
                     dtm2.fireTableStructureChanged();*/
@@ -179,6 +179,40 @@ public class App extends JFrame {
         });
 
         pathField.setText(test.getActivePath());
+
+    // Обработчики кнопок
+        backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //test.updateTable(searchField);
+                test.movingHistoryPath(2);
+                contentArray = test.getContent(valueActiveField, 1);
+                dtm.setDataVector(contentArray,columnsHeader);
+                dtm.fireTableStructureChanged();
+                pathField.setText(test.getActivePath());
+            }
+        });
+
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //test.updateTable(searchField);
+                test.movingHistoryPath(1);
+                contentArray = test.getContent(valueActiveField, 2);
+                dtm.setDataVector(contentArray,columnsHeader);
+                dtm.fireTableStructureChanged();
+                pathField.setText(test.getActivePath());
+            }
+        });
+
+        historyButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //test.updateTable(searchField);
+                test.readHistoryPath();
+            }
+        });
+
     // Настройки окна
         setContentPane(manePanel);
         setSize(800,600);
