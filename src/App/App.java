@@ -6,6 +6,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class App extends JFrame {
     FM test = new FM();
@@ -136,11 +138,13 @@ public class App extends JFrame {
         JMenuItem mCopy = new JMenuItem("Копировать");
         JMenuItem mDelete = new JMenuItem("Удалить");
         JMenuItem mRename = new JMenuItem("Переименовать");
+        JMenuItem mPaste = new JMenuItem("Вставить");
 
         // Добавление меню элементов в контекстное меню
         popupMenuTable.add(mCopy);
         popupMenuTable.add(mDelete);
         popupMenuTable.add(mRename);
+        popupMenuTable.add(mPaste);
 
         // Контекстное меню #2 (для панели таблицы)
         JPopupMenu popupMenuPanelTable = new JPopupMenu();
@@ -277,7 +281,7 @@ public class App extends JFrame {
         mCopy.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
-                System.out.println("Item 1 clicked.");
+                test.copyFileOrFolder(clickRMBNameFileOrFolder);
             }
         });
 
@@ -292,7 +296,22 @@ public class App extends JFrame {
         mRename.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
+                test.readingСatalog(clickRMBNameFileOrFolder);
                 System.out.println("Item 3 clicked.");
+            }
+        });
+
+        mPaste.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    test.copyСatalog(clickRMBNameFileOrFolder);
+                } catch (FileNotFoundException ex) {
+                    System.out.println("error");
+//                    throw new RuntimeException(ex);
+                } catch (IOException ex) {
+                    System.out.println("error");
+//                    throw new RuntimeException(ex);
+                }
             }
         });
 
@@ -315,6 +334,13 @@ public class App extends JFrame {
             public void actionPerformed(ActionEvent e)
             {
                 System.out.println("Item 3 clicked.");
+            }
+        });
+
+        mPPaste.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
             }
         });
 
