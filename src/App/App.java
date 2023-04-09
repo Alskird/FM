@@ -3,17 +3,20 @@ package App;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicOptionPaneUI;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 
 public class App extends JFrame {
     FM test = new FM();
-    private Object[][] contentArray = test.getHomeContent();
-    private Object[] columnsHeader = new String[] {"Имя", "Тип"};
+    private String[][] contentArray = test.getHomeContent();
+    private String[] columnsHeader = new String[] {"Имя", "Тип"};
     private int[] selectTableSlot = new int[2];
     private boolean status = false;
     private String valueActiveField;
+    private String clickRMBNameFileOrFolder;
     private DefaultTableModel dtm = new DefaultTableModel(contentArray, columnsHeader);
+    private Point clickRMB;
 
     App(){
 
@@ -126,7 +129,7 @@ public class App extends JFrame {
 
         manePanel.add(centerPanel, BorderLayout.CENTER);
 
-        // Контекстное меню
+        // Контекстное меню #1 (для таблицы)
         JPopupMenu popupMenuTable = new JPopupMenu();
 
         // Создание меню элементов для контекстного меню
@@ -139,9 +142,26 @@ public class App extends JFrame {
         popupMenuTable.add(mDelete);
         popupMenuTable.add(mRename);
 
+        // Контекстное меню #2 (для панели таблицы)
+        JPopupMenu popupMenuPanelTable = new JPopupMenu();
+
+        // Создание меню элементов для контекстного меню
+        JMenuItem mPCopy = new JMenuItem("Копировать");
+        JMenuItem mPDelete = new JMenuItem("Удалить");
+        JMenuItem mPRename = new JMenuItem("Переименовать");
+        JMenuItem mPPaste = new JMenuItem("Вставить");
+
+        // Добавление меню элементов в контекстное меню
+        popupMenuPanelTable.add(mPCopy);
+        popupMenuPanelTable.add(mPDelete);
+        popupMenuPanelTable.add(mPRename);
+        popupMenuPanelTable.add(mPPaste);
+
+
         // Таблица файлов/каталогов
         /*JTable table1 = new JTable(array, columnsHeader);
         centerPanel.add(new JScrollPane(table1));*/
+
         JTable table1 = new JTable(contentArray,columnsHeader){
           @Override
           public boolean isCellEditable(int row, int column){
@@ -150,7 +170,51 @@ public class App extends JFrame {
         };
         table1.setModel(dtm);
 
+/*        TableColumn column = null;
+        for (int i = 0; i < 5; i++) {
+            column = table1.getColumnModel().getColumn(i);
+            if (i == 2) {
+                column.setPreferredWidth(100); //third column is bigger
+            } else {
+                column.setPreferredWidth(50);
+            }
+        }*/
+
+        JScrollPane scrollPane = new JScrollPane(table1);
+        table1.setFillsViewportHeight(true);
+
         centerPanel.add(new JScrollPane(table1));
+
+
+        /*centerPanel.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON3) {
+                    System.out.println("Access");
+                    popupMenuPanelTable.show(centerPanel, e.getX(), e.getY());
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });*/
 
         table1.addMouseListener(new MouseListener() {
             public void mouseClicked(MouseEvent event) {
@@ -160,12 +224,7 @@ public class App extends JFrame {
                     }
                     if (event.getClickCount() == 2) {
                         valueActiveField = (table1.getValueAt(table1.getSelectedRow(), table1.getSelectedColumn())).toString();
-                        contentArray = test.getContent(valueActiveField, 0);
-                    /*DefaultTableModel dtm2 = (DefaultTableModel) table1.getModel();
-                    dtm2.setDataVector(contentArray,columnsHeader);
-                    dtm2.fireTableStructureChanged();*/
-                        dtm.setDataVector(contentArray,columnsHeader);
-                        dtm.fireTableStructureChanged();
+                        test.updateTable(columnsHeader, valueActiveField, dtm);
                         pathField.setText(test.getActivePath());
                     } else {
                         if (event.getClickCount() == 1) {
@@ -183,8 +242,21 @@ public class App extends JFrame {
                 } else {
                     if (event.getButton() == MouseEvent.BUTTON3) {
                         //popupMenuTable.show(manePanel, event.getX(), event.getY());
-                        popupMenuTable.show(event.getComponent(), event.getX(), event.getY());
-                        System.out.println(table1.getName());
+                        //System.out.println(popupMenuTable.getComponentIndex(mDelete));
+                        clickRMBNameFileOrFolder = null;
+                        int x = event.getX();
+                        int y = event.getY();
+                        clickRMB = new Point(x,y);
+                        int row = table1.rowAtPoint(clickRMB);
+                        int column = table1.columnAtPoint(clickRMB);
+                        if (row != -1 && column != -1){
+                            clickRMBNameFileOrFolder = table1.getValueAt(row,column).toString();
+                            System.out.println("Success");
+                            popupMenuTable.show(event.getComponent(), event.getX(), event.getY());
+                        } else {
+                            System.out.println("Fail");
+                            popupMenuPanelTable.show(event.getComponent(), event.getX(), event.getY());
+                        }
                     }
                 }
             }
@@ -201,7 +273,7 @@ public class App extends JFrame {
 
         pathField.setText(test.getActivePath());
 
-    // Обработчики элементов контекстного меню
+    // Обработчики элементов контекстного меню #1
         mCopy.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
@@ -212,11 +284,34 @@ public class App extends JFrame {
         mDelete.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
-                System.out.println("Item 2 clicked.");
+                test.deleteFileOrFolder(clickRMBNameFileOrFolder);
+                test.updateTable(columnsHeader, dtm);
             }
         });
 
         mRename.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e)
+            {
+                System.out.println("Item 3 clicked.");
+            }
+        });
+
+    // Обработчики элементов контекстного меню #2
+        mPCopy.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e)
+            {
+                System.out.println("Item 1 clicked.");
+            }
+        });
+
+        mPDelete.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e)
+            {
+                System.out.println("Item 2 clicked.");
+            }
+        });
+
+        mPRename.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
                 System.out.println("Item 3 clicked.");
@@ -229,7 +324,7 @@ public class App extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 //test.updateTable(searchField);
                 test.movingHistoryPath(2);
-                contentArray = test.getContent(valueActiveField, 1);
+                contentArray = test.getContent();
                 dtm.setDataVector(contentArray,columnsHeader);
                 dtm.fireTableStructureChanged();
                 pathField.setText(test.getActivePath());
@@ -241,7 +336,7 @@ public class App extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 //test.updateTable(searchField);
                 test.movingHistoryPath(1);
-                contentArray = test.getContent(valueActiveField, 2);
+                contentArray = test.getContent();
                 dtm.setDataVector(contentArray,columnsHeader);
                 dtm.fireTableStructureChanged();
                 pathField.setText(test.getActivePath());
@@ -255,7 +350,6 @@ public class App extends JFrame {
                 test.readHistoryPath();
             }
         });
-
     // Настройки окна
         setContentPane(manePanel);
         setSize(800,600);
