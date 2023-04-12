@@ -1,27 +1,44 @@
 package App;
 
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.io.*;
+import java.awt.*;
+import java.awt.datatransfer.*;
+import java.lang.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 public class FM {
 
-    private String copyPath, pastePath, path, lastPath, readingPath, copyNameFileOrFolder, pasteFolder;
-    private final String homePath = "C://HomeFM/";
-    private boolean flag = true;
-    private int flagReading = 0;
+    private String pastePath, tempPastePath, path, readingPath, pasteFolder, historyPath, activePath, copyNameFileOrFolder;
+    private String startReading, endReading, tempPath2;
     private String[][] catalogContent;
-    private ArrayList<String> historyPath = new ArrayList<>();
-    private int activePath;
-    private File dir, dirNew, dirCopy, readingDir, copyDir, newDir, pasteDir;
+    private String[] history, tempPath1;
     private String[] columnsHeader = new String[] {"Имя", "Тип"};
+    private final String homePath = "C:/HomeFM/";
+    private final int homePathInt = homePath.split("/").length - 1;
+    private int flagReading = 0, flagHistory, numberFiles, numberFolders;
+    private boolean flag = true, rootFlag = true;
+    private File dir, readingDir, pasteDir, copyPath;
     private DefaultTableModel dtm;
+    private JTextField pathField;
+    private Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    private DataFlavor flavor = DataFlavor.javaFileListFlavor;
+
+    public void initializingElements(JTextField pathField) {
+        this.pathField = pathField;
+    }
 
     public String[][] getHomeContent() {
         int counter = 0;
@@ -48,16 +65,14 @@ public class FM {
                 }
                 counter++;
             }
-            historyPath.add(homePath);
-            movingHistoryPath(0);
+            historyManagement(homePath);
         }
         return catalogContent;
     }
 
     public String[][] getContent() {
         int counter = 0;
-        path = historyPath.get(activePath);
-        System.out.println(path);
+        path = activePath;
         dir = new File(path);
         if (dir.isDirectory())
         {
@@ -86,8 +101,7 @@ public class FM {
     }
     public String[][] getContent(String selectPath) {
         int counter = 0;
-        path = historyPath.get(activePath) + selectPath + "/";
-        System.out.println(path);
+        path = activePath + selectPath + "/";
         dir = new File(path);
         if (dir.isDirectory())
         {
@@ -125,8 +139,7 @@ public class FM {
                 }
             }
         }*/
-        historyPath.add(path);
-        movingHistoryPath(1);
+        historyManagement(path);
         return catalogContent;
     }
 
@@ -135,46 +148,12 @@ public class FM {
     }
 
     public String getActivePath() {
-        return historyPath.get(activePath);
+        return activePath;
     }
 
     public void readHistoryPath() {
-        for (String hPath: historyPath) {
+        for (String hPath: history) {
             System.out.println(hPath);
-        }
-    }
-
-    public void movingHistoryPath(int offsetCode) {
-        /*
-        0 - задача первого пути (домашний каталог/первый запуск)
-        1 - движение вперёд
-        2 - движение назад
-        3 - движение в конец
-        */
-        switch (offsetCode) {
-            case (0):
-                System.out.println("задача первого пути (домашний каталог/первый запуск)");
-                activePath = 0;
-                break;
-            case (1):
-                System.out.println("движение вперёд");
-                if (activePath < historyPath.size() - 1) {
-                    activePath++;
-                }
-                break;
-            case (2):
-                System.out.println("движение назад");
-                if (activePath > 0) {
-                    activePath--;
-                }
-                break;
-            case (3):
-                System.out.println("движение в конец");
-                activePath = historyPath.size();
-                System.out.println(activePath);
-                break;
-            default:
-                break;
         }
     }
 
@@ -184,68 +163,140 @@ public class FM {
     }
 
     public void copyFileOrFolder(String nameFileOrFolder){
-        /*System.out.println("Copy!");
-        copyPath = getActivePath();
-        dirCopy = new File(copyPath, nameFileOrFolder);
-        System.out.println(dirCopy);*/
-        copyPath = getActivePath();
-        copyNameFileOrFolder = nameFileOrFolder;
-        System.out.println(copyPath);
-        System.out.println(copyNameFileOrFolder);
+        File file = new File(activePath,nameFileOrFolder);
+        List listOfFiles = new ArrayList();
+        listOfFiles.add(file);
+        System.out.println(nameFileOrFolder);
+        FileTransferable ft = new FileTransferable(listOfFiles);
+
+        clipboard.setContents(ft, new ClipboardOwner() {
+            @Override
+            public void lostOwnership(Clipboard clipboard, Transferable contents) {
+                System.out.println("Lost ownership");
+            }
+        });
+
+/*        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ft, new ClipboardOwner() {
+            @Override
+            public void lostOwnership(Clipboard clipboard, Transferable contents) {
+                System.out.println("Lost ownership");
+            }
+        });*/
     }
 
-    public void pasteFileOrFolder(String nameFileOrFolder) throws IOException {
-        System.out.println("Paste!");
-        pastePath = getActivePath() + nameFileOrFolder + "/" + dirCopy.getName();
-        dirNew = new File(pastePath);
-        /*File fileToCopy = new File("C://HomeFM/test/1231245/hi.txt");
-        FileInputStream inputStream = new FileInputStream(fileToCopy);
-        FileChannel inChannel = inputStream.getChannel();
-
-        File newFile = new File("C://HomeFM/test/выа/test.txt");
-        FileOutputStream outputStream = new FileOutputStream(newFile);
-        FileChannel outChannel = outputStream.getChannel();
-
-        inChannel.transferTo(0, fileToCopy.length(), outChannel);
-
-        inputStream.close();
-        outputStream.close();*/
-        File dirTemp;
-        String tempPastePath;
-        if(dirCopy.isDirectory())
-        {
-
-            dirNew.mkdir();
-            for(File item : dirCopy.listFiles()){
-
-                if(item.isDirectory()){
-                    tempPastePath = pastePath + "/" + item.getName();
-                    dirTemp = new File(tempPastePath);
-                    dirTemp.mkdir();
-                    /*dirTemp = new File(dirCopy + "/" + item.getName());
-                    dirTemp.mkdir();*/
-                    //System.out.println(item.getName() + "  \t folder");
+    public void pasteFileOrFolder(String pastePath){
+        this.pastePath = getActivePath() + pastePath + "/";
+        if (clipboard.isDataFlavorAvailable(flavor)) {
+            try {
+                List list = (List) clipboard.getData(flavor);
+                Iterator countriesIterator = list.iterator();
+                /*for (int i = 0; i < list.size(); i++) {
+                    System.out.println("Данные буфера");
+                    System.out.println(list.get(i));
+                    System.out.println("-------------------------------");
+                }*/
+                while (countriesIterator.hasNext()) {
+                    test(countriesIterator.next().toString());
+                    rootFlag = true;
                 }
-                else{
-                    //System.out.println(item.getName() + "\t file");
-                }
+            } catch (UnsupportedFlavorException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
-       /* try
-        {
-            boolean created = dirNew.createNewFile();
-            if(created)
-                System.out.println("File has been created");
-        }
-        catch(IOException ex){
+    }
 
-            System.out.println(ex.getMessage());
-        }*/
+    public String splitPathToCopy(String currentPath, int typeCall){
+        tempPath1 = currentPath.split("/");
+        tempPath2 = pastePath;
+        //tempPath2 = pastePath.split("/");
+        for (int i = 1; i < tempPath1.length; i++){
+            if (typeCall == 0){
+                tempPath2 += tempPath1[i] + "/";
+            } else {
+                tempPath2 += tempPath1[i] + "/";
+            }
+        }
+/*        if (typeCall == 0){
+            System.out.println("Вызов папки");
+        } else {
+            System.out.println("Вызов файла");
+        }
+        System.out.println(tempPath2);*/
+        return tempPath2;
+    }
+
+    public void test(String namePath){
+        //System.out.println("test");
+        flagReading ++;
+        File ttt = new File(namePath);
+        if (ttt.isDirectory()) {
+            if (rootFlag) {
+                rootFlag = false;
+                try {
+/*                    System.out.printf("Уровень - [0] ");
+                    System.out.println("Folder:    " + ttt.getName());*/
+                    pastePath += ttt.getName() + "/";
+                    Files.createDirectory(Path.of(pastePath));
+                } catch (IOException e) {
+                    System.out.println("Каталог уже существует");
+//                    System.out.println("Folder:    " + ttt.getName());
+//                    throw new RuntimeException(e);
+                }
+            }
+            for (File item : ttt.listFiles()) {
+                if (item.isDirectory()) {
+                    try {
+                        Files.createDirectory(Path.of(splitPathToCopy(namePath,0) + item.getName()));
+                    } catch (IOException e) {
+                        System.out.println("Каталог уже существует");
+                    }
+//                    System.out.println(item.getPath());
+                    /*System.out.printf("Уровень - [%d] ",flagReading);
+                    System.out.println("Folder:    " + item.getName());*/
+                    test(namePath + "/" + item.getName());
+                } else {
+//                    System.out.println(item.getPath());
+                    try {
+                        /*System.out.println("Был вызов файла");
+                        System.out.println(splitPathToCopy(namePath,1));
+                        System.out.println(splitPathToCopy(namePath,1) + item.getName());
+                        System.out.println("Путь к оригиналу");
+                        System.out.println(namePath);*/
+                        Files.createFile(Path.of(splitPathToCopy(namePath,1) + item.getName()));
+                        Files.copy(Path.of(namePath + "/" + item.getName()), Path.of(splitPathToCopy(namePath,1) + item.getName()), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        System.out.println("Файл уже существует");
+//                        throw new RuntimeException(e);
+                    }
+/*                    System.out.printf("Уровень - [%d] ",flagReading);
+                    System.out.println("File:      " + item.getName());*/
+                }
+            }
+        } else {
+            try {
+                splitPathToCopy(namePath,1);
+//                System.out.printf("Уровень - [%d] ",flagReading);
+                Files.createFile(Path.of(splitPathToCopy(namePath,1) + ttt.getName()));
+                Files.copy(Path.of(namePath), Path.of(splitPathToCopy(namePath,1) + ttt.getName()), StandardCopyOption.REPLACE_EXISTING);
+/*                System.out.println(namePath);
+                System.out.println(pastePath);*/
+            } catch (IOException e) {
+                System.out.println("Файл уже существует");
+//                throw new RuntimeException(e);
+            }
+//            System.out.println("File:      " + ttt.getPath());
+        }
+        flagReading--;
     }
 
     public void readingСatalog(String nameFolder){
         flagReading ++;
         readingPath = getActivePath() + nameFolder + "/";
+        if (numberFiles == 0 && numberFolders == 0){
+            startReading = nameFolder;
+        }
         readingDir = new File(readingPath);
         if(readingDir.isDirectory())
         {
@@ -254,15 +305,26 @@ public class FM {
                 if(item.isDirectory()){
                     System.out.printf("Уровень - [%d] ",flagReading);
                     System.out.println(item.getName() + "\t folder");
+                    numberFolders++;
                     readingСatalog(nameFolder + "/" + item.getName());
                 }
                 else{
                     System.out.printf("Уровень - [%d] ",flagReading);
                     System.out.println(item.getName() + "\t file");
+                    numberFiles++;
                 }
+                endReading = item.getName();
             }
         }
         flagReading--;
+        if (flagReading == 0){
+            System.out.printf("Стартовая точка - %s\n",startReading);
+            System.out.printf("Количество папок - %d\n",numberFolders);
+            System.out.printf("Количество файлов - %d\n",numberFiles);
+            System.out.printf("Конечная точка - %s\n",endReading);
+            numberFolders = 0;
+        }
+
     }
 
     public void copyСatalog(String nameFolder) throws IOException {
@@ -276,25 +338,17 @@ public class FM {
         readingDir = new File(readingPath);
         pastePath = getActivePath() + pasteFolder + "/" + nameFolder + "/";
         pasteDir = new File(pastePath);
-/*        System.out.println(readingDir);
-        System.out.println(pasteDir);*/
         if(readingDir.isDirectory())
         {
-            //pasteDir.mkdirs();
             for(File item : readingDir.listFiles()){
 
                 if(item.isDirectory()){
-                    System.out.printf("Уровень - [%d] ",flagReading);
-                    System.out.println(item.getName() + "\t folder");
+                    /*System.out.printf("Уровень - [%d] ",flagReading);
+                    System.out.println(item.getName() + "\t folder");*/
                     pasteDir.mkdir();
                     pastePath = getActivePath() + pasteFolder + "/" + nameFolder + "/" + item.getName();
                     pasteDir = new File(pastePath);
                     pasteDir.mkdir();
-/*                    System.out.println("------------------------");
-                    System.out.println(item.getPath());
-                    System.out.println("////////////////////////");
-                    System.out.println(pasteDir);
-                    System.out.println("------------------------");*/
                     copyСatalog(nameFolder + "/" + item.getName());
                 }
                 else{
@@ -328,4 +382,41 @@ public class FM {
         dtm.setDataVector(getContent(valueActiveField),columnsHeader);
         dtm.fireTableStructureChanged();
     }
+
+    public void updatePathField() {
+        pathField.setText(getActivePath());
+    }
+
+    public void historyManagement(String path) {
+        historyPath = path;
+        activePath = path;
+        history = path.split("/");
+        flagHistory = history.length;
+        /*for (String h : history) {
+            System.out.println(h);
+        }*/
+    }
+
+    public void back(){
+        if (flagHistory - 1 > homePathInt){
+            flagHistory--;
+            activePath = "";
+            for (int i = 0; i < flagHistory; i++){
+                activePath += history[i] + "/";
+            }
+            getContent();
+        }
+    }
+
+    public void next(){
+        if (flagHistory + 1 <= history.length){
+            flagHistory++;
+            activePath = "";
+            for (int i = 0; i < flagHistory; i++){
+                activePath += history[i] + "/";
+            }
+            getContent();
+        }
+    }
+
 }

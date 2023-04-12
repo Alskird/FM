@@ -166,6 +166,7 @@ public class App extends JFrame {
         /*JTable table1 = new JTable(array, columnsHeader);
         centerPanel.add(new JScrollPane(table1));*/
 
+        test.initializingElements(pathField);
         JTable table1 = new JTable(contentArray,columnsHeader){
           @Override
           public boolean isCellEditable(int row, int column){
@@ -188,37 +189,6 @@ public class App extends JFrame {
         table1.setFillsViewportHeight(true);
 
         centerPanel.add(new JScrollPane(table1));
-
-
-        /*centerPanel.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    System.out.println("Access");
-                    popupMenuPanelTable.show(centerPanel, e.getX(), e.getY());
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });*/
 
         table1.addMouseListener(new MouseListener() {
             public void mouseClicked(MouseEvent event) {
@@ -255,10 +225,10 @@ public class App extends JFrame {
                         int column = table1.columnAtPoint(clickRMB);
                         if (row != -1 && column != -1){
                             clickRMBNameFileOrFolder = table1.getValueAt(row,column).toString();
-                            System.out.println("Success");
+                            //System.out.println("Success");
                             popupMenuTable.show(event.getComponent(), event.getX(), event.getY());
                         } else {
-                            System.out.println("Fail");
+                            //System.out.println("Fail");
                             popupMenuPanelTable.show(event.getComponent(), event.getX(), event.getY());
                         }
                     }
@@ -297,21 +267,14 @@ public class App extends JFrame {
             public void actionPerformed(ActionEvent e)
             {
                 test.readingСatalog(clickRMBNameFileOrFolder);
+                System.out.println(clickRMBNameFileOrFolder);
                 System.out.println("Item 3 clicked.");
             }
         });
 
         mPaste.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                try {
-                    test.copyСatalog(clickRMBNameFileOrFolder);
-                } catch (FileNotFoundException ex) {
-                    System.out.println("error");
-//                    throw new RuntimeException(ex);
-                } catch (IOException ex) {
-                    System.out.println("error");
-//                    throw new RuntimeException(ex);
-                }
+                test.pasteFileOrFolder(clickRMBNameFileOrFolder);
             }
         });
 
@@ -349,7 +312,7 @@ public class App extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 //test.updateTable(searchField);
-                test.movingHistoryPath(2);
+                test.back();
                 contentArray = test.getContent();
                 dtm.setDataVector(contentArray,columnsHeader);
                 dtm.fireTableStructureChanged();
@@ -361,7 +324,7 @@ public class App extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 //test.updateTable(searchField);
-                test.movingHistoryPath(1);
+                test.next();
                 contentArray = test.getContent();
                 dtm.setDataVector(contentArray,columnsHeader);
                 dtm.fireTableStructureChanged();
