@@ -1,13 +1,9 @@
 package App;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicOptionPaneUI;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 public class App extends JFrame {
     FM test = new FM();
@@ -174,6 +170,8 @@ public class App extends JFrame {
           }
         };
         table1.setModel(dtm);
+/*        table1.setDragEnabled(true);
+        table1.setTransferHandler(new DnDTable(test));*/
 
 /*        TableColumn column = null;
         for (int i = 0; i < 5; i++) {
@@ -191,8 +189,8 @@ public class App extends JFrame {
         centerPanel.add(new JScrollPane(table1));
 
         table1.addMouseListener(new MouseListener() {
-            public void mouseClicked(MouseEvent event) {
-                if (event.getButton() == MouseEvent.BUTTON1) {
+            public void mouseClicked(java.awt.event.MouseEvent event) {
+                if (event.getButton() == java.awt.event.MouseEvent.BUTTON1) {
                     if (status) {
                         status = false;
                     }
@@ -214,7 +212,7 @@ public class App extends JFrame {
                         }
                     }
                 } else {
-                    if (event.getButton() == MouseEvent.BUTTON3) {
+                    if (event.getButton() == java.awt.event.MouseEvent.BUTTON3) {
                         //popupMenuTable.show(manePanel, event.getX(), event.getY());
                         //System.out.println(popupMenuTable.getComponentIndex(mDelete));
                         clickRMBNameFileOrFolder = null;
@@ -235,13 +233,13 @@ public class App extends JFrame {
                 }
             }
 
-            public void mouseEntered(MouseEvent event) {}
+            public void mouseEntered(java.awt.event.MouseEvent event) {}
 
-            public void mouseExited(MouseEvent event) {}
+            public void mouseExited(java.awt.event.MouseEvent event) {}
 
-            public void mousePressed(MouseEvent event) {}
+            public void mousePressed(java.awt.event.MouseEvent event) {}
 
-            public void mouseReleased(MouseEvent event) {}
+            public void mouseReleased(java.awt.event.MouseEvent event) {}
 
         });
 
@@ -258,7 +256,8 @@ public class App extends JFrame {
         mDelete.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
-                test.deleteFileOrFolder(clickRMBNameFileOrFolder);
+//                test.deleteFileOrFolder(clickRMBNameFileOrFolder);
+                test.windowConfirmationDeletion(clickRMBNameFileOrFolder);
                 test.updateTable(columnsHeader, dtm);
             }
         });
@@ -266,8 +265,9 @@ public class App extends JFrame {
         mRename.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e)
             {
-                test.readingСatalog(clickRMBNameFileOrFolder);
-                System.out.println(clickRMBNameFileOrFolder);
+                test.windowConfirmationDeletion(clickRMBNameFileOrFolder);
+                //test.readingСatalog(clickRMBNameFileOrFolder);
+                //System.out.println(clickRMBNameFileOrFolder);
                 System.out.println("Item 3 clicked.");
             }
         });
@@ -339,6 +339,9 @@ public class App extends JFrame {
                 test.readHistoryPath();
             }
         });
+
+
+
     // Настройки окна
         setContentPane(manePanel);
         setSize(800,600);
